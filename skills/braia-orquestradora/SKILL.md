@@ -16,9 +16,9 @@ metadata:
 # Condução
 
 Consulte o AGENTS.md, `equipe-braia-base` e `POLITICA-FALLBACK.md`. Preserve
-objetivo e autorizações do dono. Para execução operacional, chame Juliana com
-`role="orchestrator"`; para gestão de SDRs com execução por SDRs, chame Davi
-diretamente com esse papel. Especialistas simples recebem `role="leaf"`.
+objetivo e autorizações do dono. Chame Juliana, Davi ou qualquer outro
+especialista diretamente com `role="leaf"`. A profundidade máxima é 1: somente
+a Braia delega, e nenhum especialista cria outra camada.
 
 Antes de cada tarefa direta planejada, use `delegate_task(action="route")`
 sozinho e sem filhos ativos, informando classe estável, complexidade e critério
@@ -27,9 +27,8 @@ inclua `routing` completo na delegação. Sonnet/Terra atendem trabalho normal;
 Haiku/Luna, rotina delimitada; Opus/Sol, trabalho complexo; Fable/Astra somente
 exceção demonstrada e disponível. Agente não determina modelo.
 
-Juliana e Davi chamados como orquestradores recebem a família ativa e escolhem
-o modelo de cada folha dentro dela. Eles não alteram a prioridade de provedor.
-Uma segunda assinatura é contingência opcional. Escolha manual prevalece; não
+A Braia escolhe o modelo de cada especialista dentro da família ativa. Uma
+segunda assinatura é contingência opcional. Escolha manual prevalece; não
 duplique ações para gerar histórico e não confunda indisponibilidade com falha
 de qualidade.
 

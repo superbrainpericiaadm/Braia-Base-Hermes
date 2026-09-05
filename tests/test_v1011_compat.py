@@ -27,9 +27,9 @@ def test_release_and_runtime_contract():
     )
 
 
-def test_base_keeps_two_layers_with_dynamic_routing():
+def test_base_uses_one_delegation_layer_with_dynamic_routing():
     cfg = load_yaml("config.yaml")
-    assert cfg["delegation"]["max_spawn_depth"] == 2
+    assert cfg["delegation"]["max_spawn_depth"] == 1
     assert cfg["delegation"]["orchestrator_enabled"] is True
     assert cfg["delegation"]["child_timeout_seconds"] == 0
     assert not ({"provider", "model", "fallback_providers"} & set(cfg["delegation"]))
@@ -41,7 +41,7 @@ def test_base_keeps_two_layers_with_dynamic_routing():
     assert policy["fallback"]["max_attempts"] == 2
 
 
-def test_configurator_preserves_base_two_layer_contract():
+def test_configurator_normalizes_legacy_depth_to_one():
     sys.path.insert(0, str(ROOT / "scripts"))
     from configure_multi_ai import build_config
 
@@ -51,22 +51,26 @@ def test_configurator_preserves_base_two_layer_contract():
         "gpt-5.6-sol": {"tier": "complex", "efforts": ["low", "medium", "high"], "default_effort": "medium"},
         "gpt-6-astra": {"tier": "exceptional", "efforts": ["medium", "high"], "default_effort": "medium"},
     }}}
-    configured, mode = build_config(load_yaml("config.yaml"), True, False, catalog)
+    legacy = load_yaml("config.yaml")
+    legacy["delegation"]["max_spawn_depth"] = 2
+    configured, mode = build_config(legacy, True, False, catalog)
     assert mode == "DYNAMIC_ROUTING"
-    assert configured["delegation"]["max_spawn_depth"] == 2
+    assert configured["delegation"]["max_spawn_depth"] == 1
     assert configured["delegation"]["orchestrator_enabled"] is True
     assert configured["braia_routing"]["initialized"] is True
 
 
-def test_prompts_describe_root_and_nested_routing():
+def test_prompts_describe_root_only_routing_and_leaf_specialists():
     agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
     soul = (ROOT / "SOUL.md").read_text(encoding="utf-8")
     juliana = (ROOT / "skills/agente-juliana-ops/SKILL.md").read_text(encoding="utf-8")
     davi = (ROOT / "skills/agente-davi-sdr/SKILL.md").read_text(encoding="utf-8")
     assert 'action="route"' in agents
-    assert 'role="orchestrator"' in agents and '"role": "leaf"' in agents
+    assert '"role": "leaf"' in agents
+    assert 'role="orchestrator"' not in agents
     assert "execution_id" in agents and "review" in agents
-    assert "mesma família ativa" in juliana and "mesma família" in davi
+    assert "Não use `delegate_task`" in juliana
+    assert "não use\n`delegate_task`" in davi
     assert "braia-claude-login" in soul and "não fornece API key" in soul
 
 

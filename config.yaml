@@ -18,7 +18,7 @@ approvals:
 delegation:
   subagent_auto_approve: true
   max_concurrent_children: 3
-  max_spawn_depth: 2
+  max_spawn_depth: 1
   child_timeout_seconds: 0
   orchestrator_enabled: true
 terminal:

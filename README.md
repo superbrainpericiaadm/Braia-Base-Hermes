@@ -17,7 +17,7 @@ provas desta versão estão em [docs/RELEASE-v1.0.11.md](docs/RELEASE-v1.0.11.md
 | Agente | Responsabilidade |
 |---|---|
 | Braia | Conversa com o dono, escolhe a rota, coordena e valida. |
-| Juliana | Executa operações e coordena subagentes de segunda camada. |
+| Juliana | Executa operações e processos como especialista. |
 | Isaura | Secretaria, atendimento, documentos, e-mail e agenda. |
 | Paulo | Desenvolvimento, integrações, scripts e automações. |
 | Angélica | Contratação, criação, treinamento e integração de agentes. |
@@ -92,12 +92,12 @@ local, registra governança e conserva adicionais. Para Telegram, configure o bo
 exclusivo e a allowlist no `env-path`, valide o destinatário e só então instale o
 gateway. Nenhuma prospecção, cron ou envio nasce ativado.
 
-## Dois níveis de delegação
+## Uma camada de delegação
 
-A Braia consulta a prioridade do provedor e despacha Juliana ou Davi como
-`orchestrator`, com rota explícita. Juliana e Davi escolhem os modelos de seus
-filhos dentro da mesma família ativa e os chamam como `leaf`. A profundidade
-máxima é 2 e o lote admite até três filhos. O runtime registra conclusão e
+A Braia consulta a prioridade do provedor, escolhe o modelo de cada subtarefa e
+despacha diretamente Juliana, Davi ou outro especialista como `leaf`, com rota
+explícita. A profundidade máxima é 1 e o lote admite até três especialistas.
+Nenhum especialista cria outra camada. O runtime registra conclusão e
 `execution_id`; a Braia só grava aceite após conferir a evidência.
 
 ## Atualização

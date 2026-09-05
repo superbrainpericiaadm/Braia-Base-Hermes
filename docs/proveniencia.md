@@ -15,8 +15,9 @@ seletivamente da release oficial:
 Foram portados o contrato de roteamento por tarefa, os catálogos Claude e
 ChatGPT/Codex, o configurador de assinaturas, o frontend PKCE do Claude, o
 aplicador e os patches revisados do runtime. A identidade, a equipe de seis
-agentes, os dois níveis de delegação, o sistema de módulos e o onboarding da
-Braia Base foram preservados e adaptados ao novo contrato.
+agentes, o sistema de módulos e o onboarding da Braia Base foram preservados.
+A delegação foi alinhada ao contrato v1.0.11: Braia na raiz, uma camada de
+especialistas folha e profundidade máxima 1.
 
 Não foram copiados agentes periciais, rotinas de clientes, cron, tokens,
 credenciais, relatórios de laboratório, endereços de VPS ou o atualizador

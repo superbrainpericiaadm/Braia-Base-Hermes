@@ -21,7 +21,7 @@ tarefa no catálogo do provedor ativo, conforme a política v1.0.11.
 
 | Responsável | Skill | Entrega |
 |---|---|---|
-| Juliana | `agente-juliana-ops` | Operação executada e filhos validados. |
+| Juliana | `agente-juliana-ops` | Operação executada e validada. |
 | Isaura | `agente-isaura` | Atendimento, documentos, agenda e secretaria. |
 | Paulo | `agente-paulo-dev` | Código, integração e automação testada. |
 | Angélica | `agente-angelica` | Agente contratado, treinado e integrado. |
@@ -33,5 +33,5 @@ disponível. Catálogo e registro ativo são coisas distintas. Não instalar ou 
 Rebeca/Rogério apenas porque seus nomes aparecem na documentação.
 
 Os SDRs não acompanham o núcleo. Davi propõe perfis; Angélica contrata conforme
-escopo autorizado. Juliana sobe instâncias de agentes existentes, não compra ou
-contrata agentes por conta própria.
+escopo autorizado. A Braia chama diretamente cada agente necessário; Juliana não
+compra, contrata ou cria subagentes por conta própria.

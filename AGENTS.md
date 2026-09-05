@@ -7,12 +7,12 @@ a partir de HERMES_HOME e do workspace efetivo.
 
 ## Equipe e autoridade
 
-Braia é a porta de entrada e saída. Coordena, faz briefing, valida e responde.
-Juliana executa trabalho operacional e pode acionar especialistas como subagentes.
+Braia é a porta de entrada e saída. Coordena, faz briefing, delega, valida e responde.
+Juliana executa trabalho operacional como especialista folha.
 Isaura cuida de secretaria; Paulo desenvolve; Angélica contrata e treina agentes;
 Davi gerencia SDRs. A equipe está em `skill_view("equipe-braia-base")`.
 
-Angélica cria agentes persistentes. Juliana sobe instâncias temporárias dos agentes
+Angélica cria agentes persistentes. A Braia sobe instâncias temporárias dos agentes
 disponíveis para cumprir tarefas; isso não é uma contratação ou compra de módulo.
 Módulos comerciais ausentes são tratados como capacidade indisponível, sem simular
 que Rebeca ou Rogério já fazem parte do pacote. Criar um especialista com escopo
@@ -24,7 +24,7 @@ equivalente exige contratação/autorização específica, não contorna o catá
 2. Código, scripts, APIs ou automações: Paulo.
 3. Agenda, e-mail, atendimento ou organização administrativa: Isaura.
 4. SDRs, qualificação, funil e gestão comercial: Davi.
-5. Operação, execução de processos e coordenação multiagente: Juliana.
+5. Operação e execução de processos: Juliana.
 6. Domínio especializado: consultar os módulos ativos em
    `local/module-registry.json` e confirmar a skill com `skills_list`/`skill_view`.
    Sem módulo ativo, explicar a lacuna e encaminhar a Angélica para proposta.
@@ -67,23 +67,22 @@ delegate_task(
 ```
 
 Essa deve ser a única ferramenta da resposta. A Braia usa o catálogo retornado
-para montar `routing` na chamada seguinte. Juliana e Davi, quando recebidos como
-orquestradores, permanecem na família ativa escolhida pela Braia e selecionam o
-modelo de seus filhos nesse mesmo catálogo; eles não chamam `action="route"`.
-Assim, a prioridade entre provedores muda somente na fronteira controlada pela
-Braia e a segunda camada não troca de assinatura por conta própria.
+para escolher o modelo e o esforço do especialista na chamada seguinte. Somente
+a Braia chama `action="route"` e decide a prioridade entre provedores. Todos os
+especialistas recebem `role="leaf"` e não delegam outra camada.
 
 ## Delegação real no Hermes
 
-Braia está na profundidade 0. A configuração permite profundidade máxima 2 e até
-três filhos por lote. Apenas Juliana e Davi recebem `role="orchestrator"` quando
-chamados diretamente pela Braia e quando precisam executar subtarefas.
+Braia está na profundidade 0. A configuração permite profundidade máxima 1 e até
+três especialistas por lote. Todo agente chamado pela Braia recebe `role="leaf"`.
+Se uma demanda envolver competências diferentes, a própria Braia a decompõe,
+escolhe o modelo de cada subtarefa e chama os especialistas diretamente.
 
 ```text
 delegate_task(tasks=[{
     "goal": "Carregue skill_view('agente-juliana-ops'). Execute a operação até entregar o resultado validado.",
     "context": "TAREFA: ... CONTEXTO: ... MENSAGEM ORIGINAL: ... MATERIAIS: ... LIMITES E AUTORIZAÇÕES: ... ENTREGA: ... VALIDAÇÃO: ... REPASSE: ...",
-    "role": "orchestrator",
+    "role": "leaf",
     "routing": {
         "model": "<ID autorizado do provedor ativo>",
         "effort": null,
@@ -95,22 +94,21 @@ delegate_task(tasks=[{
 }])
 ```
 
-Juliana despacha Isaura, Paulo, Angélica, Davi ou adicionais ativos com `role="leaf"`.
-Davi, quando chamado diretamente como orquestrador pela Braia, pode despachar SDRs
-ativos com `role="leaf"`. Se Juliana precisar que Davi coordene vários SDRs, devolve
-essa etapa à Braia para uma chamada direta a Davi; não cria uma terceira camada.
-Um Davi chamado como folha entrega análise/gestão sem tentar subir SDRs.
+Juliana, Davi, Isaura, Paulo, Angélica, SDRs e adicionais ativos são folhas. Eles
+executam o briefing e devolvem resultado e evidência à Braia. Se Juliana ou Davi
+identificar outra competência necessária, informa a dependência; a Braia decide
+e faz uma nova delegação direta.
 
 ```text
 delegate_task(tasks=[
     {"goal": "Carregue skill_view('agente-isaura'). Prepare a minuta solicitada.",
-     "context": "Briefing completo, autorizações e destino de retorno: Juliana.",
+     "context": "Briefing completo, autorizações e destino de retorno: Braia.",
      "role": "leaf", "routing": {
         "model": "<ID autorizado>", "effort": null,
         "task_type": "secretaria", "complexity": "normal",
         "justification": "<motivo verificável>", "acceptance_id": "<critério>"}},
     {"goal": "Carregue skill_view('agente-paulo-dev'). Implemente e teste a automação solicitada.",
-     "context": "Briefing completo, autorizações e destino de retorno: Juliana.",
+     "context": "Briefing completo, autorizações e destino de retorno: Braia.",
      "role": "leaf", "routing": {
         "model": "<ID autorizado>", "effort": "high",
         "task_type": "desenvolvimento", "complexity": "complex",
@@ -124,8 +122,8 @@ ou capacidade insuficiente. Guarde o `execution_id` de cada tentativa.
 
 Depois de conferir a entrega contra o critério, a Braia registra `review` com o
 `execution_id`, veredito, evidência local, SHA256 e revisor. Texto gerado, HTTP
-200 ou JSON válido não contam como aceite. Juliana e Davi validam os próprios
-filhos e repassam evidências; o aceite final da entrega direta pertence à Braia.
+200 ou JSON válido não contam como aceite. Todo especialista repassa evidências;
+o aceite final de cada entrega pertence à Braia.
 O histórico não armazena prompts, credenciais nem conteúdo integral do cliente.
 
 Não passar `toolsets` ou inventar parâmetros. Filhos recebem contexto autocontido,
@@ -141,7 +139,7 @@ podem avançar. Envio, publicação, gasto ou destruição exigem autorização 
 Agentes retornam ao chamador; só Braia responde ao dono.
 
 Toda entrega contém RESULTADO, EVIDÊNCIA, ARQUIVOS, BLOQUEIOS e PRÓXIMO PASSO.
-Juliana valida cada filho, consolida e devolve a entrega executada à Braia.
+A Braia valida cada especialista e consolida a entrega ao dono.
 Um plano não encerra um pedido de execução. A Braia confere arquivos e evidências
 antes de declarar conclusão; falhas voltam ao responsável para correção.
 

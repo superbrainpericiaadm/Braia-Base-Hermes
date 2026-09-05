@@ -35,8 +35,9 @@ fora do estado gerenciado, ele grava a proposta em
    `routing` e `execution_id`.
 
 Na migração de `0.1.0`, o configurador acrescenta `braia_routing`, aliases e
-catálogo às configurações existentes, elimina pins estáticos de filhos e mantém
-`max_spawn_depth: 2` e `orchestrator_enabled: true`. Uma assinatura basta. Não
+catálogo às configurações existentes, elimina pins estáticos de filhos e normaliza
+`max_spawn_depth: 1` com `orchestrator_enabled: true`. Assim, a Braia chama os
+especialistas diretamente e perfis antigos não conservam delegação aninhada. Uma assinatura basta. Não
 inicie login Claude se o cliente não pediu; se ele pedir, a própria Braia usa
 `braia-claude-login` na conversa privada.
 

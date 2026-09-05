@@ -18,10 +18,10 @@ v1.0.11 e mantém a arquitetura modular própria do produto.
 - módulos, OAuth, Google, workspace, memórias, sessões e configurações locais
   continuam fora do conteúdo substituível da distribuição.
 
-A Braia Base preserva dois níveis de execução. A Braia escolhe a prioridade do
-provedor e despacha Juliana ou Davi como orquestradores. Eles selecionam modelos
-dos filhos dentro da mesma família ativa e os despacham como folhas. Agente e
-skill definem responsabilidade e método; o nome do agente não fixa a LLM.
+A Braia Base usa uma camada de delegação, conforme o contrato v1.0.11. A Braia
+escolhe a prioridade do provedor e o modelo de cada subtarefa, depois despacha
+diretamente o especialista como folha. Nenhum especialista cria outra camada.
+Agente e skill definem responsabilidade e método; o nome do agente não fixa a LLM.
 
 ## Proveniência
 
@@ -37,7 +37,7 @@ somente a árvore Hermes revisada
 - Linux no pacote fechado: 91 testes aprovados e 12 subtestes aprovados;
 - runtime Hermes real após o patch: 202 testes aprovados e zero falhas;
 - patch comprovado nos estados `ready`, `applied` e `already_applied`;
-- instalação real da distribuição confirmou versão 1.0.11, profundidade 2,
+- instalação real da distribuição confirmou versão 1.0.11, profundidade 1,
   skill Claude e preservação de sentinelas em workspace, memória e `local/`.
 
 Os transportes de modelo, Google e Telegram não foram acionados por esta

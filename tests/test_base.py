@@ -75,7 +75,7 @@ def test_distribution_owns_no_customer_paths():
                 'google_client_secret.json'} & set(manifest['distribution_owned'])
     assert all((ROOT / p).exists() for p in manifest['distribution_owned'])
     config = yaml.safe_load((ROOT / 'config.yaml').read_text(encoding='utf-8'))
-    assert config['delegation']['max_spawn_depth'] == 2
+    assert config['delegation']['max_spawn_depth'] == 1
     assert config['delegation']['orchestrator_enabled'] is True
     assert '${HERMES_HOME}/local/skills' in config['skills']['external_dirs']
     assert not any(config['skills']['config']['braia'].values())

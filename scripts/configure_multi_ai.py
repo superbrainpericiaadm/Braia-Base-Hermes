@@ -217,7 +217,9 @@ def build_config(original, has_codex, has_claude, catalog=None):
         cfg["delegation"].pop(key, None)
     cfg["delegation"].update(child_timeout_seconds=0)
     cfg["delegation"].setdefault("max_concurrent_children", 3)
-    cfg["delegation"].setdefault("max_spawn_depth", 1)
+    # v1.0.11 has one delegation layer: Braia (depth 0) calls leaf specialists
+    # (depth 1). Normalize older Braia Base profiles that allowed nested agents.
+    cfg["delegation"]["max_spawn_depth"] = 1
     cfg["delegation"].setdefault("subagent_auto_approve", True)
     for key in ("base_url", "api_key", "api_mode"):
         cfg["model"].pop(key, None)

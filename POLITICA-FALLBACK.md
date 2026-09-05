@@ -28,7 +28,7 @@ timeout e falha do provedor permitem outra assinatura conectada, com capacidade
 adequada. Não reduzir capacidade de uma tarefa difícil apenas porque houve queda.
 Se não houver alternativa capaz, devolver bloqueio explícito.
 
-Novos filhos acompanham o provedor em que o orquestrador está operando, inclusive
+Novos especialistas acompanham o provedor em que a Braia está operando, inclusive
 durante fallback. A troca temporária não promove por si só o provedor, não apaga
 contas e não interrompe uma tarefa em andamento. Tentativas são limitadas; antes
 de repetir uma ação com possível efeito externo, conferir o estado do destino.
@@ -100,8 +100,8 @@ de entrega. Não copiar contas de outras instalações.
 O runtime precisa das extensões de `runtime-patches/README.md`; o configurador
 recusa uma interface incompatível. A arquitetura da v1.0.11 foi validada no
 laboratório, incluindo delegação real, conclusão assíncrona e revisão
-persistida. A Braia Base conserva dois níveis: somente a Braia escolhe a
-prioridade do provedor; Juliana e Davi selecionam modelos dos filhos na mesma
-família ativa. Veja `docs/homologacao.md`. Cada instalação ainda exige validação.
+persistida. A Braia Base usa uma camada: somente a Braia escolhe a prioridade do
+provedor e o modelo de cada especialista, e todos os especialistas são folhas.
+Veja `docs/homologacao.md`. Cada instalação ainda exige validação.
 O Worker de novas instalações pertence a uma etapa separada.
 Não empacotar dados, endereços, backups, histórico ou credenciais de instalação.
