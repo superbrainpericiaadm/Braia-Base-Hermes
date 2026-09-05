@@ -1,0 +1,87 @@
+_config_version: 33
+model:
+  default: gpt-5.6-sol
+  provider: openai-codex
+approvals:
+  mode: 'off'
+  timeout: 60
+  cron_mode: approve
+  destructive_slash_confirm: false
+  mcp_reload_confirm: false
+  deny:
+  - sudo*
+delegation:
+  subagent_auto_approve: true
+  max_concurrent_children: 3
+  max_spawn_depth: 2
+  child_timeout_seconds: 0
+  orchestrator_enabled: true
+terminal:
+  backend: local
+  cwd: ~/.hermes/profiles/braia-base/workspace
+timezone: America/Sao_Paulo
+display:
+  busy_input_mode: queue
+  busy_text_mode: queue
+stt:
+  enabled: true
+  provider: local
+  language: pt
+  echo_transcripts: false
+  prompt: Português brasileiro (pt-BR). Preserve nomes próprios, números e termos
+    técnicos.
+  local:
+    model: base
+tts:
+  provider: edge
+memory:
+  memory_enabled: true
+  user_profile_enabled: true
+platform_toolsets:
+  telegram:
+  - file
+  - terminal
+  - web
+  - skills
+  - memory
+  - session_search
+  - delegation
+  - todo
+  - cronjob
+  - tts
+  - clarify
+  cli:
+  - file
+  - terminal
+  - web
+  - skills
+  - memory
+  - session_search
+  - delegation
+  - todo
+  - cronjob
+  - tts
+  - clarify
+skills:
+  write_approval: false
+  guard_agent_created: false
+  external_dirs:
+  - ${HERMES_HOME}/local/skills
+  config:
+    braia:
+      owner_name: ''
+      owner_full_name: ''
+      owner_email: ''
+      owner_telegram_id: ''
+      owner_title: ''
+      business_name: ''
+      institutional_email: ''
+      calendar_tag: ''
+      gmail_label_prefix: ''
+      manager_name: ''
+      manager_email: ''
+      manager_email_alt: ''
+      drive_root: ''
+      drive_templates_folder_id: ''
+      payment_gateway: ''
+      crm_name: ''

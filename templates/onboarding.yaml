@@ -1,0 +1,20 @@
+required:
+  - owner_name
+  - business_name
+telegram:
+  - owner_telegram_id
+email:
+  - owner_email
+  - institutional_email
+optional:
+  - owner_full_name
+  - owner_title
+  - calendar_tag
+  - gmail_label_prefix
+  - manager_name
+  - manager_email
+  - manager_email_alt
+  - drive_root
+  - drive_templates_folder_id
+  - payment_gateway
+  - crm_name

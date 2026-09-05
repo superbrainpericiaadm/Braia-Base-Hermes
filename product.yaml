@@ -1,0 +1,9 @@
+id: braia-base
+version: 0.1.0
+status: development
+core_agents: [braia, juliana, isaura, paulo, angelica, davi]
+optional_products:
+  - id: rebeca-pericia-judicial
+    included: false
+  - id: rogerio-tributario
+    included: false

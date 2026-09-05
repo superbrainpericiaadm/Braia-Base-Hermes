@@ -1,0 +1,24 @@
+name: braia-base
+version: 0.1.0
+description: "Braia Base: equipe operacional modular da SuperBrain no Hermes."
+hermes_requires: ">=0.20.4"
+author: "SuperBrain Inteligência Pericial e Contábil Ltda"
+license: Proprietary
+env_requires:
+  - name: TELEGRAM_BOT_TOKEN
+    description: Token do bot exclusivo desta instalação; necessário para Telegram.
+    required: false
+  - name: TELEGRAM_ALLOWED_USERS
+    description: IDs autorizados; obrigatório ao habilitar Telegram.
+    required: false
+distribution_owned:
+  - SOUL.md
+  - AGENTS.md
+  - config.yaml
+  - distribution.yaml
+  - product.yaml
+  - skills
+  - templates
+  - scripts
+  - docs
+  - README.md
