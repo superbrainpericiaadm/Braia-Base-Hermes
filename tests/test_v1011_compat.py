@@ -20,6 +20,7 @@ def test_release_and_runtime_contract():
     assert distribution["hermes_requires"] == ">=0.21.0"
     assert product["routing_contract"] == "braia-routing-v1"
     assert {"POLITICA-FALLBACK.md", "runtime-patches"} <= set(distribution["distribution_owned"])
+    assert (ROOT / "docs/RELEASE-v1.0.11.md").is_file()
     patch = ROOT / "runtime-patches/delegation-fallback.patch"
     assert hashlib.sha256(patch.read_bytes()).hexdigest() == (
         "fbe6b92fcf4119c825d2ecc5546332c2e432736717810094f34430d926d9f5a7"

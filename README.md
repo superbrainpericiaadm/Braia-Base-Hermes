@@ -9,7 +9,8 @@ do escritório cliente.
 Esta release é **v1.0.11** e usa o mesmo contrato técnico homologado da Braia
 v1.0.11: escolha de modelo por tarefa, OAuth de assinatura, fallback capaz,
 histórico local de entregas aceitas e prioridade conservadora entre provedores.
-A proveniência exata está em [docs/proveniencia.md](docs/proveniencia.md).
+A proveniência exata está em [docs/proveniencia.md](docs/proveniencia.md) e as
+provas desta versão estão em [docs/RELEASE-v1.0.11.md](docs/RELEASE-v1.0.11.md).
 
 ## Equipe incluída
 
