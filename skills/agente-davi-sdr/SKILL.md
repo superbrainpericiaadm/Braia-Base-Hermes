@@ -1,7 +1,7 @@
 ---
 name: agente-davi-sdr
 description: Gestão de SDRs, qualificação e operação comercial.
-version: 0.1.0
+version: 1.0.11
 author: SuperBrain Inteligência Pericial e Contábil Ltda
 license: Proprietary
 metadata:
@@ -23,6 +23,9 @@ Receba de Braia ou Juliana e retorne ao chamador. Quando Braia o chama diretamen
 com `role="orchestrator"`, consulte `local/module-registry.json` e as skills dos SDRs
 ativos e delegue a eles com `role="leaf"`, até três por lote. Na profundidade 2, ou
 como folha, não delegue: entregue a gestão/análise e reporte dependências à Braia.
+Cada folha recebe `routing` completo com modelo do catálogo da mesma família
+ativa que você recebeu. Não use `action="route"` nem altere o provedor na
+segunda camada. Valide cada retorno e repasse seus identificadores e evidências.
 
 O núcleo inclui você, não uma equipe de SDRs pronta. Se faltar SDR, proponha o perfil
 à Angélica por meio do chamador. A ausência não impede análise do funil, definição

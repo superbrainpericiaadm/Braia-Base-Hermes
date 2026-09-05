@@ -1,88 +1,118 @@
 # Braia Base
 
-Produto de entrada da SuperBrain: uma equipe de IA configurada como distribuição
-de perfis do Hermes Agent. Este repositório é a fonte de evolução do núcleo comum.
-A SuperBrain vende IA, automações e consultoria; quem presta serviços técnicos é o
-escritório cliente, sob sua própria responsabilidade profissional.
+Produto-base da SuperBrain para criar equipes de IA modulares no Hermes. A base
+inclui Braia, Juliana, Isaura, Paulo, Angélica e Davi; especialistas verticais e
+ferramentas adicionais entram como módulos locais. A SuperBrain fornece IA,
+automação e consultoria. O trabalho profissional continua sob responsabilidade
+do escritório cliente.
 
-Versão inicial **0.1.0, em desenvolvimento**. Derivada de uma fotografia do
-[Braia Perícias Hermes](https://github.com/superbrainpericiaadm/Braia-esc-pericias-Hermes),
-sem alterar aquele repositório. A origem exata está em [proveniência](docs/proveniencia.md).
+Esta release é **v1.0.11** e usa o mesmo contrato técnico homologado da Braia
+v1.0.11: escolha de modelo por tarefa, OAuth de assinatura, fallback capaz,
+histórico local de entregas aceitas e prioridade conservadora entre provedores.
+A proveniência exata está em [docs/proveniencia.md](docs/proveniencia.md).
 
 ## Equipe incluída
 
 | Agente | Responsabilidade |
 |---|---|
-| Braia | Orquestradora, conversa com o cliente, direciona e valida entregas. |
-| Juliana | Executora operacional, decompõe, executa rotinas e sobe subagentes. |
+| Braia | Conversa com o dono, escolhe a rota, coordena e valida. |
+| Juliana | Executa operações e coordena subagentes de segunda camada. |
 | Isaura | Secretaria, atendimento, documentos, e-mail e agenda. |
 | Paulo | Desenvolvimento, integrações, scripts e automações. |
 | Angélica | Contratação, criação, treinamento e integração de agentes. |
-| Davi | Gerente dos SDRs: processo comercial, qualificação e acompanhamento. |
+| Davi | Processo comercial e coordenação de SDRs instalados. |
 
-Rebeca (perícia judicial), Rogério (tributário), outros especialistas e ferramentas
-são adicionais. Seus conteúdos não acompanham a base. Davi vem incluído; uma equipe
-de SDRs especializados é contratada/configurada conforme a necessidade do cliente.
-Veja o [contrato de módulos](docs/modulos.md).
+Rebeca, Rogério, SDRs especializados e outras ferramentas não acompanham o
+núcleo. A base consulta `local/module-registry.json` antes de anunciar ou chamar
+um adicional. Veja [docs/modulos.md](docs/modulos.md).
 
-## Instalação
+## Assinaturas e modelos
 
-Requer Hermes **0.20.4+**, Python **3.10+**, PyYAML e Git autenticado neste repositório
-privado. A delegação requer suporte a `role="orchestrator"`; a validação dessa
-capacidade faz parte da [homologação](docs/homologacao.md).
+Uma assinatura ChatGPT/Codex ou Claude basta. A segunda é opcional. O dono
+escolhe o orquestrador e a preferência inicial fica salva. Cada subagente recebe
+um modelo do provedor ativo:
+
+| Trabalho | Claude | ChatGPT/Codex |
+|---|---|---|
+| Rotina delimitada | Haiku | Luna |
+| Trabalho normal | Sonnet | Terra |
+| Trabalho complexo | Opus | Sol |
+| Exceção demonstrada | Fable, se disponível | Astra, se disponível |
+
+Com duas assinaturas, indisponibilidade pode usar a outra com capacidade
+adequada. Entregas realmente validadas alimentam um histórico local para ajustar
+prioridade entre tarefas comparáveis. Escolha manual prevalece; não há mudança
+por uma falha isolada. Consulte [POLITICA-FALLBACK.md](POLITICA-FALLBACK.md).
+
+Depois que a instalação já consegue conversar, Claude conecta pela conversa
+privada: a Braia envia o link, o dono autoriza no site e devolve o código
+completo. O fluxo usa OAuth de assinatura, sem API key, terminal para o cliente
+ou ativação de uso extra. A escolha e o login da primeira assinatura em novas
+instalações ficam para a etapa do Worker. Google também é opcional e continua
+no fluxo `braia-google-login`.
+
+## Requisitos homologados
+
+- Hermes 0.21.0 na árvore Git revisada
+  `59d8aa0a3099a0a74aab6f9abd2c4ffcc8ddf5d2`;
+- Python 3.10 ou superior, PyYAML e Git;
+- ao menos uma assinatura OAuth conectada no próprio perfil;
+- runtime com `runtime-patches/delegation-fallback.patch` aplicado.
+
+O helper recusa outra árvore do Hermes e preserva qualquer alteração local. Uma
+versão mais nova do Hermes exige nova revisão do patch; o requisito semântico no
+manifesto não substitui essa conferência.
+
+## Instalação manual de referência
+
+O Worker de novas instalações será integrado em outra etapa. Para homologação ou
+suporte manual, use clones limpos na tag `v1.0.11` e caminhos absolutos. Nos
+comandos abaixo, `KIT` é este repositório, `PERFIL` é a raiz efetiva do perfil,
+`RUNTIME` é o clone do Hermes e `BACKUP` fica fora dele.
 
 ```bash
-hermes profile install https://github.com/superbrainpericiaadm/Braia-Base-Hermes --name braia-base --alias -y
-hermes -p braia-base config path
+git clone --branch v1.0.11 --depth 1 https://github.com/superbrainpericiaadm/Braia-Base-Hermes.git "$KIT"
+hermes profile install "$KIT" --name braia-base --alias -y
 hermes -p braia-base auth
+python "$PERFIL/scripts/profile_setup.py" --profile "$PERFIL"
+python "$PERFIL/scripts/apply_runtime_patch.py" --runtime "$RUNTIME" --backup-root "$BACKUP" --check
+python "$PERFIL/scripts/apply_runtime_patch.py" --runtime "$RUNTIME" --backup-root "$BACKUP"
+HERMES_HOME="$PERFIL" PYTHONPATH="$RUNTIME" python "$PERFIL/scripts/configure_multi_ai.py" --check
+HERMES_HOME="$PERFIL" PYTHONPATH="$RUNTIME" python "$PERFIL/scripts/configure_multi_ai.py"
+hermes -p braia-base config check
 ```
 
-Use o diretório pai do caminho retornado por `config path` como raiz absoluta do perfil:
+Pare gateway e processos do runtime antes de aplicar o patch e reinicie somente
+após `config check` e uma inferência real. O configurador lê apenas as contas do
+perfil, recusa API key e preserva configuração, dados e módulos alheios às rotas.
 
-```bash
-python /CAMINHO/ABSOLUTO/DO/PERFIL/scripts/profile_setup.py --profile /CAMINHO/ABSOLUTO/DO/PERFIL
-hermes -p braia-base chat
-```
+Peça “execute o onboarding da Braia Base”. O setup cria workspace e namespace
+local, registra governança e conserva adicionais. Para Telegram, configure o bot
+exclusivo e a allowlist no `env-path`, valide o destinatário e só então instale o
+gateway. Nenhuma prospecção, cron ou envio nasce ativado.
 
-Peça “execute o onboarding da Braia Base”. O script ajusta `terminal.cwd`, cria o
-workspace, registra a governança e prepara o espaço preservado dos adicionais.
-O modelo/provedor inicial é herdado da distribuição de origem e pode ser alterado
-no `config.yaml` conforme a conta do cliente. Credenciais são sempre locais.
+## Dois níveis de delegação
 
-Google é opcional. O instalador SuperBrain provisiona o cliente OAuth fora do Git;
-a skill `braia-google-login` conduz a conexão após esse provisionamento.
-Sem Google conectado, arquivos locais e rotinas internas continuam disponíveis.
+A Braia consulta a prioridade do provedor e despacha Juliana ou Davi como
+`orchestrator`, com rota explícita. Juliana e Davi escolhem os modelos de seus
+filhos dentro da mesma família ativa e os chamam como `leaf`. A profundidade
+máxima é 2 e o lote admite até três filhos. O runtime registra conclusão e
+`execution_id`; a Braia só grava aceite após conferir a evidência.
 
-Para Telegram, preencha as variáveis no caminho retornado por
-`hermes -p braia-base config env-path`, confira os IDs autorizados e então execute:
+## Atualização
 
-```bash
-hermes -p braia-base gateway install
-hermes -p braia-base gateway start
-```
-
-Nenhuma rotina de envio ou prospecção nasce ativada. Integrações precisam ser
-configuradas e testadas no ambiente do cliente.
-
-## Evolução
-
-Atualizações do núcleo são feitas neste repositório. Módulos e dados de cada cliente
-ficam em `local/` e `workspace/`. A distribuição usa `distribution_owned` explícito
-e não distribui cron, tokens, clientes OAuth ou bases de clientes.
-Consulte [atualização e rollback](docs/atualizacao.md) antes de atualizar.
-
-```bash
-hermes profile update braia-base
-python /CAMINHO/ABSOLUTO/DO/PERFIL/scripts/profile_setup.py --profile /CAMINHO/ABSOLUTO/DO/PERFIL
-```
+Atualizações exigem tag fixa, backup e perfil ocioso. O núcleo distribuído pode
+mudar; `local/`, `workspace/`, OAuth, memórias, sessões, bancos e personalizações
+não podem ser substituídos. A migração de `0.1.0` para `1.0.11` também aplica o
+runtime e roda o configurador de rotas. Veja [docs/atualizacao.md](docs/atualizacao.md).
 
 ## Desenvolvimento
 
 ```bash
 python -m pip install -r requirements-dev.txt
-python -m pytest -q
+python -m pytest tests -q
 ```
 
-O pacote configura o runtime Hermes; não inclui um runtime próprio. Testes locais
-validam instalação auxiliar, módulos e preservação de dados. Conversas reais,
-Google e Telegram exigem a homologação descrita na documentação.
+Os testes locais validam pacote, configuração, migração e segurança do helper.
+A suíte do patch roda contra a árvore exata do Hermes em ambiente Linux isolado.
+Google, Telegram e inferência precisam de contas próprias do ambiente de teste.

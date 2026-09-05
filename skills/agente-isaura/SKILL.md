@@ -1,7 +1,7 @@
 ---
 name: agente-isaura
 description: Secretaria, atendimento, documentos, e-mail e agenda.
-version: 0.1.0
+version: 1.0.11
 author: SuperBrain Inteligência Pericial e Contábil Ltda
 license: Proprietary
 metadata:

@@ -1,36 +1,42 @@
-# Homologação
+# Homologação da Braia Base v1.0.11
 
-Testes automatizados locais verificam estrutura, nomes de skills, instalação de
-módulos, rejeição de colisões, validação de caminho e preservação no setup.
-Eles não provam a qualidade das respostas de um modelo ou autenticação dos canais.
+A homologação combina testes da distribuição e prova contra a árvore exata do
+Hermes. Testes unitários não comprovam inferência, Telegram ou consumo do plano.
 
-Em perfil isolado, com modelo autenticado e dados fictícios:
+## Estrutural
+
+- `distribution.yaml` e `product.yaml` em `1.0.11`;
+- nenhum segredo, banco, cliente OAuth ou dado de cliente no Git;
+- configuração com `braia_routing` schema 1 e sem A/B/C ou pin estático de filho;
+- profundidade 2, Juliana/Davi orquestradores e demais agentes folhas;
+- módulos adicionais preservados em `local/`;
+- helper Claude usando o perfil atual e OAuth de assinatura;
+- runtime patch idempotente e limitado à árvore revisada.
+
+## Perfil isolado
+
+Com dados fictícios, instale a tag, aplique o patch, conecte uma assinatura e
+rode o configurador. Repita com Codex somente, Claude somente e as duas contas,
+com preferência inicial de cada família. Confirme:
+
+1. primeira configuração e reaplicação idempotente;
+2. Braia usando `action="route"` antes do filho direto;
+3. Juliana ou Davi recebendo `role="orchestrator"` e delegando folhas com modelos
+   diferentes dentro da mesma família ativa;
+4. `execution_id`, conclusão síncrona e assíncrona e review vinculado à sessão;
+5. fallback com capacidade equivalente ou superior e tentativas limitadas;
+6. configuração, OAuth, memória, workspace, cron, módulos e SQLite preservados.
+
+## Casos funcionais
 
 | Pedido | Evidência esperada |
 |---|---|
-| Quem é você? | Braia, equipe Base, sem identidade de outra empresa. |
-| Juliana, organize estes arquivos e peça ao Paulo um script de inventário. | Braia chama Juliana como orchestrator; Juliana chama Paulo como leaf e valida arquivo/teste. |
-| Davi, organize nosso funil. | Davi entrega gestão; não inventa SDRs instalados. |
-| Davi, coordene os SDRs de teste instalados. | Braia chama Davi diretamente; SDRs folhas devolvem ao gerente. |
-| Revise meu laudo com a Rebeca. | Sem adicional ativo: informa capacidade ausente e proposta de contratação. |
-| Crie um agente para catalogar documentos locais. | Angélica prepara, valida e registra pacote autorizado. |
-| Agende uma reunião sem data definida. | Isaura devolve a lacuna; não inventa evento. |
+| Organize arquivos e peça ao Paulo um inventário | Braia roteia Juliana; Juliana chama Paulo como folha e valida o arquivo. |
+| Davi, coordene SDRs ativos | Braia chama Davi como orquestrador; só skills registradas são usadas. |
+| Revise meu laudo com Rebeca | Sem módulo ativo, informa a capacidade ausente. |
+| Conecte meu Claude | Link PKCE na conversa privada, código sem eco, configuração preservada e inferência separada. |
+| Agende reunião sem data | Isaura informa a lacuna; não cria evento. |
 
-Conferir no trace do Hermes os papéis e profundidades, não só o texto da resposta.
-Testar update com configuração, memória, módulo e documento sentinela e confirmar
-preservação. Google: provisionar cliente OAuth local e realizar consentimento e
-check. Telegram: bot dedicado e allowlist. Envio só com tarefa de teste autorizada.
-
-## Evidência inicial, 2026-09-05
-
-- `python -m pytest -q`: 20 testes aprovados no Windows/Python local.
-- Instalação com `install_distribution` e atualização com `update_distribution`
-  do Hermes 0.20.4 real, em HERMES_HOME temporário e nome de perfil alternativo:
-  aprovadas. Setup e instalação de um agente fictício também executados.
-- Confirmada a preservação de configuração do cliente, documento no workspace,
-  memória, arquivo de ambiente fictício, cron e módulo local após update.
-- Compilação dos scripts Python aprovada. Frontmatter validado conforme o formato
-  Hermes (que inclui author/version, diferente do validador de skills Codex).
-
-Estado inicial: em desenvolvimento. Conversas com modelo real, delegação observada
-em trace, OAuth e Telegram ainda dependem da homologação no ambiente de execução.
+Teste de modelo real exige conta própria do laboratório. Teste Google exige
+cliente OAuth provisionado fora do Git. Telegram exige bot dedicado, allowlist e
+destino autorizado. Nenhuma dessas integrações é ativada pelo simples clone.

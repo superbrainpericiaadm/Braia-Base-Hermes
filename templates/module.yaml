@@ -1,7 +1,7 @@
 # Exemplo de formato, não é um módulo instalado nem disponível comercialmente.
 id: exemplo-adicional
 version: 0.1.0
-base_requires: ">=0.1.0,<0.2.0"
+base_requires: ">=1.0.11,<2.0.0"
 kind: agent
 skills:
   - agente-exemplo

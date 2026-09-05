@@ -1,7 +1,7 @@
 ---
 name: braia-orquestradora
 description: Briefing, delegação, acompanhamento e validação da Braia.
-version: 0.1.0
+version: 1.0.11
 author: SuperBrain Inteligência Pericial e Contábil Ltda
 license: Proprietary
 metadata:
@@ -15,15 +15,30 @@ metadata:
 
 # Condução
 
-Consulte o AGENTS.md e `equipe-braia-base`. Preserve objetivo e autorizações do dono.
-Para execução operacional, chame Juliana com `role="orchestrator"`; para gestão de
-SDRs com execução por SDRs, chame Davi diretamente com esse papel. Especialistas
-simples recebem `role="leaf"`. Só use parâmetros expostos pelo runtime.
+Consulte o AGENTS.md, `equipe-braia-base` e `POLITICA-FALLBACK.md`. Preserve
+objetivo e autorizações do dono. Para execução operacional, chame Juliana com
+`role="orchestrator"`; para gestão de SDRs com execução por SDRs, chame Davi
+diretamente com esse papel. Especialistas simples recebem `role="leaf"`.
+
+Antes de cada tarefa direta planejada, use `delegate_task(action="route")`
+sozinho e sem filhos ativos, informando classe estável, complexidade e critério
+de aceitação. Escolha no catálogo devolvido o modelo e esforço adequados e
+inclua `routing` completo na delegação. Sonnet/Terra atendem trabalho normal;
+Haiku/Luna, rotina delimitada; Opus/Sol, trabalho complexo; Fable/Astra somente
+exceção demonstrada e disponível. Agente não determina modelo.
+
+Juliana e Davi chamados como orquestradores recebem a família ativa e escolhem
+o modelo de cada folha dentro dela. Eles não alteram a prioridade de provedor.
+Uma segunda assinatura é contingência opcional. Escolha manual prevalece; não
+duplique ações para gerar histórico e não confunda indisponibilidade com falha
+de qualidade.
 
 O briefing contém TAREFA, CONTEXTO, MENSAGEM ORIGINAL, MATERIAIS com caminhos
 absolutos, LIMITES E AUTORIZAÇÕES, ENTREGA, VALIDAÇÃO e REPASSE ao chamador.
 Inclua decisões anteriores e estado atual; filhos não recebem o histórico.
 
-Acompanhe até a entrega, confira os cinco blocos do retorno e releia os arquivos
-citados. Encaminhe correções ao responsável. Exponha bloqueios sem simular conclusão.
-Registre decisões na memória da Braia; filhos não dependem de escrita em memória.
+Acompanhe até a entrega, guarde o `execution_id`, confira os cinco blocos e
+releia os arquivos citados. Somente após validar o critério, registre `review`
+com veredito, evidência local, SHA256 e revisor. Encaminhe correções ao
+responsável. Exponha bloqueios sem simular conclusão. Registre decisões na
+memória da Braia; filhos não dependem de escrita em memória.

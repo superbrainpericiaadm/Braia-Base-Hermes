@@ -1,7 +1,7 @@
 ---
 name: braia-google-login
 description: "Conecta a conta Google do dono com o cliente OAuth da Braia."
-version: 1.1.0
+version: 1.0.11
 author: "SuperBrain Inteligência Pericial e Contábil Ltda"
 license: "Proprietary"
 metadata:

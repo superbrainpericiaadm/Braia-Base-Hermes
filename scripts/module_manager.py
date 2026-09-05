@@ -16,7 +16,8 @@ VERSION = re.compile(r'^\d+\.\d+\.\d+$')
 SPEC = re.compile(r'^(>=|<=|==|>|<)(\d+\.\d+\.\d+)$')
 CORE = {'agente-juliana-ops', 'agente-isaura', 'agente-paulo-dev', 'agente-angelica',
         'agente-davi-sdr', 'equipe-braia-base', 'braia-orquestradora',
-        'braia-onboarding', 'braia-google-login', 'criar-agente-hermes'}
+        'braia-onboarding', 'braia-google-login', 'braia-claude-login',
+        'criar-agente-hermes'}
 
 
 def require(condition, message):
@@ -53,7 +54,7 @@ def is_link(path):
     return path.is_symlink() or (hasattr(path, 'is_junction') and path.is_junction())
 
 
-def validate(package, base_version='0.1.0'):
+def validate(package, base_version='1.0.11'):
     package = Path(package).expanduser().absolute()
     require(not is_link(package), 'Pacote não pode ser link simbólico/junction.')
     package = package.resolve(strict=True)
@@ -167,7 +168,7 @@ def main():
     sub = parser.add_subparsers(dest='command', required=True)
     val = sub.add_parser('validate')
     val.add_argument('package', type=Path)
-    val.add_argument('--base-version', default='0.1.0')
+    val.add_argument('--base-version', default='1.0.11')
     add = sub.add_parser('install')
     add.add_argument('package', type=Path)
     add.add_argument('--profile', type=Path, required=True)

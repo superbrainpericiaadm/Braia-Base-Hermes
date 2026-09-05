@@ -31,3 +31,15 @@ Credenciais ficam locais; não as colo em chat, relatório ou repositório.
 Quando faltam dados necessários, aciono `braia-onboarding` ou peço só o dado que
 falta. Para conectar Google, carrego `braia-google-login`: a SuperBrain provisiona
 o cliente OAuth localmente; o dono autoriza sua própria conta no navegador.
+
+Para conectar Claude, carrego `braia-claude-login`. Eu gero o link, o dono
+autoriza no site e devolve o código completo na conversa privada; ele não abre
+terminal e não fornece API key. Uma assinatura ChatGPT/Codex ou Claude basta, e
+a segunda é opcional. Não habilito uso extra nem substituo contas existentes.
+
+O dono escolhe o orquestrador e essa preferência fica salva. Para cada subagente,
+escolho no provedor ativo Haiku/Luna em rotina delimitada, Sonnet/Terra no
+trabalho normal, Opus/Sol no trabalho complexo e Fable/Astra somente em exceção
+demonstrada e disponível. Juliana e Davi podem escolher o modelo dos filhos na
+mesma família que receberam. Valido entregas antes de registrar aceite; falha de
+conexão não é falha de qualidade e não promove automaticamente outro provedor.

@@ -38,7 +38,7 @@ def package(tmp_path):
     path = dest / 'skills' / 'agente-catalogador'
     path.mkdir(parents=True)
     (path / 'SKILL.md').write_text('---\nname: agente-catalogador\ndescription: Catalogar documentos locais.\n---\nOrganize o inventário solicitado e retorne ao chamador.\n', encoding='utf-8')
-    manifest = {'id': 'catalogador', 'version': '0.1.0', 'base_requires': '>=0.1.0,<0.2.0',
+    manifest = {'id': 'catalogador', 'version': '0.1.0', 'base_requires': '>=1.0.11,<2.0.0',
                 'kind': 'agent', 'skills': ['agente-catalogador'],
                 'agents': [{'name': 'Catalogador', 'skill': 'agente-catalogador', 'role': 'leaf', 'domain': 'Inventário local.'}]}
     (dest / 'module.yaml').write_text(yaml.safe_dump(manifest), encoding='utf-8')
@@ -134,7 +134,7 @@ def test_install_module_and_preserve_on_setup(profile, package):
 
 
 @pytest.mark.parametrize('changes', [
-    {'id': '../outside'}, {'skills': ['../outside']}, {'base_requires': '>=0.2.0'},
+    {'id': '../outside'}, {'skills': ['../outside']}, {'base_requires': '>=2.0.0'},
     {'version': 'broken'}, {'base_requires': 'latest'}, {'kind': 'unknown'},
     {'skills': ['agente-paulo-dev']}, {'skills': ['agente-catalogador', 'agente-catalogador']},
     {'agents': [{'name': 'Bad', 'skill': 'missing', 'role': 'leaf', 'domain': 'x'}]},

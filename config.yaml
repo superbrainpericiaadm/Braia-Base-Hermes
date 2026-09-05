@@ -2,6 +2,11 @@ _config_version: 33
 model:
   default: gpt-5.6-sol
   provider: openai-codex
+  aliases:
+    gpt-5.6-luna: openai-codex/gpt-5.6-luna
+    gpt-5.6-terra: openai-codex/gpt-5.6-terra
+    gpt-5.6-sol: openai-codex/gpt-5.6-sol
+    gpt-6-astra: openai-codex/gpt-6-astra
 approvals:
   mode: 'off'
   timeout: 60
@@ -85,3 +90,76 @@ skills:
       drive_templates_folder_id: ''
       payment_gateway: ''
       crm_name: ''
+model_aliases:
+  gpt-5.6-luna:
+    provider: openai-codex
+    model: gpt-5.6-luna
+  gpt-5.6-terra:
+    provider: openai-codex
+    model: gpt-5.6-terra
+  gpt-5.6-sol:
+    provider: openai-codex
+    model: gpt-5.6-sol
+  gpt-6-astra:
+    provider: openai-codex
+    model: gpt-6-astra
+auxiliary: {}
+braia_routing:
+  enabled: true
+  initialized: false
+  schema_version: 1
+  initial_provider: openai-codex
+  initial_model: gpt-5.6-sol
+  initial_tier: complex
+  providers:
+    openai-codex:
+      models:
+        gpt-5.6-luna:
+          tier: routine
+          efforts:
+          - low
+          - medium
+          - high
+          default_effort: medium
+          availability: unverified
+          source: reviewed_policy
+        gpt-5.6-terra:
+          tier: normal
+          efforts:
+          - low
+          - medium
+          - high
+          default_effort: medium
+          availability: unverified
+          source: reviewed_policy
+        gpt-5.6-sol:
+          tier: complex
+          efforts:
+          - low
+          - medium
+          - high
+          default_effort: medium
+          availability: unverified
+          source: reviewed_policy
+        gpt-6-astra:
+          tier: exceptional
+          efforts:
+          - low
+          - medium
+          - high
+          default_effort: medium
+          availability: unverified
+          source: reviewed_policy
+      orchestrator_model: gpt-5.6-sol
+  policy_version: braia-routing-v1
+  manual_provider: null
+  learning:
+    enabled: true
+    min_samples: 8
+    window_days: 30
+    promotion_margin: 0.15
+    cooldown_seconds: 86400
+    sustained_windows: 2
+  fallback:
+    enabled: true
+    max_attempts: 2

@@ -1,7 +1,7 @@
 ---
 name: equipe-braia-base
 description: Equipe, responsabilidades e módulos ativos da Braia Base.
-version: 0.1.0
+version: 1.0.11
 author: SuperBrain Inteligência Pericial e Contábil Ltda
 license: Proprietary
 metadata:
@@ -16,6 +16,8 @@ metadata:
 # Equipe da Braia Base
 
 Braia orquestra e responde ao dono. O AGENTS.md do workspace é o contrato de execução.
+Os agentes abaixo definem responsabilidade e método. O modelo é escolhido por
+tarefa no catálogo do provedor ativo, conforme a política v1.0.11.
 
 | Responsável | Skill | Entrega |
 |---|---|---|

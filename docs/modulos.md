@@ -12,7 +12,8 @@ Um diretório local, obtido de fonte autorizada, contém `module.yaml` e
 Veja `templates/module.yaml`. `kind` pode ser `agent` ou `tool`.
 Ferramentas usam `agents: []`; sua skill orienta a integração. Dependências externas
 e credenciais são configuradas separadamente, sem execução automática de instaladores.
-`base_requires` aceita intervalos semver numéricos separados por vírgula.
+`base_requires` aceita intervalos semver numéricos separados por vírgula. Para
+esta release, use `>=1.0.11,<2.0.0` quando o módulo depender do roteamento novo.
 
 ```bash
 python /PERFIL/scripts/module_manager.py validate /PACOTE
