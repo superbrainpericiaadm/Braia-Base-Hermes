@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Install reviewed runtime states without merging or discarding local edits.
+"""Install reviewed runtime changes with filewise three-way merges.
 
 The lock serializes installers, not arbitrary editors. Every replacement is
 rechecked; rollback refuses to overwrite a concurrent editor's unknown bytes.
@@ -18,8 +18,11 @@ import subprocess
 import sys
 import tempfile
 
-# Installation commit metadata varies; the reviewed source tree does not.
+# Known 0.21.0 bases provide reviewed blobs.  HEAD and its whole tree are
+# evidence only: unrelated customer files must never decide patch eligibility.
 BASE_TREE = '59d8aa0a3099a0a74aab6f9abd2c4ffcc8ddf5d2'
+UPSTREAM_TREE = 'daaffc303ae437041b7f76be17c5f61b14f2ce99'
+KNOWN_BASE_TREES = {'0.21.0': (BASE_TREE, UPSTREAM_TREE)}
 
 
 def _git(root, *args, env=None, data=None):
@@ -34,6 +37,20 @@ def _git(root, *args, env=None, data=None):
     return result.stdout
 
 
+def _known_base(root):
+    """Resolve reviewed base blobs by their embedded Hermes version marker."""
+    for version, trees in KNOWN_BASE_TREES.items():
+        marker = f'__version__ = "{version}"'.encode()
+        for tree in trees:
+            try:
+                version_file = _git(root, 'show', tree + ':hermes_cli/__init__.py')
+            except ValueError:
+                continue
+            if marker in version_file:
+                return version, tree
+    raise ValueError('Unknown runtime base/version; preserve without modification')
+
+
 def _identity(root):
     try:
         head = _git(root, 'rev-parse', 'HEAD').decode().strip()
@@ -41,9 +58,11 @@ def _identity(root):
         top = Path(_git(root, 'rev-parse', '--show-toplevel').decode().strip()).resolve()
     except ValueError as exc:
         raise ValueError('Unsupported runtime source tree') from exc
-    if tree != BASE_TREE or top != root:
+    if top != root:
         raise ValueError('Unsupported runtime source tree; inspect and validate before adapting the patch')
-    return {'runtime_commit': head, 'runtime_tree': tree}
+    version, base_tree = _known_base(root)
+    return {'runtime_commit': head, 'runtime_tree': tree,
+            'runtime_base_version': version, 'runtime_base_tree': base_tree}
 
 
 def _safe_path(path):
@@ -114,7 +133,7 @@ def _entries(stage, env):
     return entries
 
 
-def _states(root, patch, previous):
+def _states(root, base_tree, patch, previous):
     """Private Git index AND object store; --check leaves real Git intact."""
     objects = Path(_git(root, 'rev-parse', '--git-path', 'objects').decode().strip())
     if not objects.is_absolute():
@@ -131,7 +150,7 @@ def _states(root, patch, previous):
         targets = sorted(targets)
         states = []
         for content in (None, patch, previous):
-            _git(stage, 'read-tree', BASE_TREE, env=env)
+            _git(stage, 'read-tree', base_tree, env=env)
             base = _entries(stage, env)
             if content is not None:
                 _git(stage, 'apply', '--cached', '--whitespace=nowarn', '-', env=env, data=content)
@@ -193,8 +212,72 @@ def _matches(snapshot, state):
                for name, expected in state.items())
 
 
+def _merge_text(name, base, current, target):
+    if any(data is None or b'\0' in data for data in (base, current, target)):
+        raise ValueError(f'Runtime managed binary conflict: {name}; preserved without modification')
+    try:
+        for data in (base, current, target):
+            data.decode('utf-8')
+    except UnicodeDecodeError as exc:
+        raise ValueError(f'Runtime managed binary conflict: {name}; preserved without modification') from exc
+    with tempfile.TemporaryDirectory(prefix='braia-runtime-merge-') as directory:
+        paths = [Path(directory) / part for part in ('local', 'base', 'target')]
+        for path, data in zip(paths, (current, base, target)):
+            path.write_bytes(data)
+        result = subprocess.run(
+            ['git', 'merge-file', '-p', '-L', 'local', '-L', 'base', '-L', 'target',
+             *(str(path) for path in paths)], capture_output=True)
+    if result.returncode == 0:
+        return result.stdout
+    if result.returncode == 1:
+        raise ValueError(f'Runtime managed three-way conflict: {name}; preserved without modification')
+    raise ValueError(f'Runtime managed merge failed: {name}; preserved without modification')
+
+
+def _planned_state(before, base, target, previous):
+    """Classify and resolve each managed path independently."""
+    planned = {}
+    for name in sorted(target):
+        observed = before[name]
+        current = None if observed is None else (observed['data'], observed['mode'])
+        old, desired = base[name], target[name]
+        if current == desired or (previous is not None and current == previous[name]):
+            planned[name] = desired
+        elif desired == old:
+            # Upstream does not modify this managed path: preserve local edits,
+            # including a deliberate local deletion.
+            planned[name] = current
+        elif current == old:
+            planned[name] = desired
+        elif current is None:
+            raise ValueError(f'Runtime local deletion conflicts with target: {name}; preserved without modification')
+        elif old is None:
+            raise ValueError(f'Runtime target addition collides with local file: {name}; preserved without modification')
+        elif desired is None:
+            raise ValueError(f'Runtime target deletion conflicts with local change: {name}; preserved without modification')
+        else:
+            planned[name] = (_merge_text(name, old[0], current[0], desired[0]), desired[1])
+    return planned
+
+
+def _managed_snapshot_sha256(snapshot):
+    value = {
+        name: None if item is None else {
+            'sha256': _hash(item['data']),
+            'mode': item['mode'],
+            'uid': item['uid'],
+            'gid': item['gid'],
+        }
+        for name, item in sorted(snapshot.items())
+    }
+    return _hash(json.dumps(value, sort_keys=True, separators=(',', ':')).encode())
+
+
 def _verify(root, identity, snapshot):
-    if _identity(root) != identity or _snapshot(root, snapshot) != snapshot:
+    current = _identity(root)
+    base_fields = ('runtime_base_version', 'runtime_base_tree')
+    if (any(current[field] != identity[field] for field in base_fields)
+            or _snapshot(root, snapshot) != snapshot):
         raise ValueError('Runtime changed concurrently; preserved without modification')
 
 
@@ -343,7 +426,9 @@ def _transition(root, before, expected, identity, backup):
             path.unlink(missing_ok=True)
 
 
-def install(runtime, patch, backup_root, check=False, previous_patch=None):
+def install(runtime, patch, backup_root, check=False, previous_patch=None,
+            expected_runtime_base_tree=None, expected_managed_snapshot_sha256=None,
+            expected_patch_sha256=None):
     root = _safe_path(runtime).resolve(strict=True)
     patch_path = Path(patch).resolve(strict=True)
     patch = patch_path.read_bytes()
@@ -356,18 +441,29 @@ def install(runtime, patch, backup_root, check=False, previous_patch=None):
         raise ValueError('Keep runtime backups outside the runtime checkout')
     with _lock(root):
         identity = _identity(root)
-        base, expected, old = _states(root, patch, previous)
-        before = _snapshot(root, expected)
+        base, target, old = _states(root, identity['runtime_base_tree'], patch, previous)
+        before = _snapshot(root, target)
         _verify(root, identity, before)
+        managed_snapshot_sha256 = _managed_snapshot_sha256(before)
+        observed_gate = (
+            identity['runtime_base_tree'], managed_snapshot_sha256, _hash(patch)
+        )
+        expected_gate = (
+            expected_runtime_base_tree, expected_managed_snapshot_sha256, expected_patch_sha256
+        )
+        if any(value is not None for value in expected_gate) and observed_gate != expected_gate:
+            raise ValueError('Runtime no longer matches approved managed runtime identity; preserved without modification')
+        expected = _planned_state(before, base, target, old if previous is not None else None)
         if _matches(before, expected):
-            return {'status': 'already_applied', **identity, 'patch_sha256': _hash(patch)}
-        if not _matches(before, base) and not (previous is not None and _matches(before, old)):
-            raise ValueError('Runtime patch targets contain local changes; preserved without modification')
+            return {'status': 'already_applied', **identity, 'patch_sha256': _hash(patch),
+                    'managed_snapshot_sha256': managed_snapshot_sha256}
         if check:
-            return {'status': 'ready', **identity}
+            return {'status': 'ready', **identity, 'patch_sha256': _hash(patch),
+                    'managed_snapshot_sha256': managed_snapshot_sha256}
         backup = _backup(root, backup_root, before, expected, identity, patch, previous)
         _transition(root, before, expected, identity, backup)
-        return {'status': 'applied', 'backup': str(backup), **identity, 'patch_sha256': _hash(patch)}
+        return {'status': 'applied', 'backup': str(backup), **identity, 'patch_sha256': _hash(patch),
+                'managed_snapshot_sha256': managed_snapshot_sha256}
 
 
 if __name__ == '__main__':
@@ -375,9 +471,20 @@ if __name__ == '__main__':
     parser.add_argument('--runtime', required=True, type=Path)
     parser.add_argument('--backup-root', required=True, type=Path)
     parser.add_argument('--check', action='store_true')
+    parser.add_argument('--expected-runtime-base-tree')
+    parser.add_argument('--expected-managed-snapshot-sha256')
+    parser.add_argument('--expected-patch-sha256')
     args = parser.parse_args()
     try:
-        result = install(args.runtime, Path(__file__).resolve().parent.parent / 'runtime-patches/delegation-fallback.patch', args.backup_root, args.check)
+        result = install(
+            args.runtime,
+            Path(__file__).resolve().parent.parent / 'runtime-patches/delegation-fallback.patch',
+            args.backup_root,
+            args.check,
+            expected_runtime_base_tree=args.expected_runtime_base_tree,
+            expected_managed_snapshot_sha256=args.expected_managed_snapshot_sha256,
+            expected_patch_sha256=args.expected_patch_sha256,
+        )
         print(json.dumps(result))
     except (ValueError, OSError) as exc:
         print('ERROR:', str(exc), file=sys.stderr)
