@@ -16,7 +16,7 @@ def load_yaml(name):
 def test_release_and_runtime_contract():
     distribution = load_yaml("distribution.yaml")
     product = load_yaml("product.yaml")
-    assert distribution["version"] == product["version"] == "1.0.11"
+    assert distribution["version"] == product["version"] == "1.0.12"
     assert distribution["hermes_requires"] == ">=0.21.0"
     assert product["routing_contract"] == "braia-routing-v1"
     assert {"POLITICA-FALLBACK.md", "runtime-patches"} <= set(distribution["distribution_owned"])
@@ -88,7 +88,7 @@ def test_claude_and_config_helpers_target_base_profile():
 def test_core_skills_are_at_release_version():
     for path in (ROOT / "skills").glob("*/SKILL.md"):
         frontmatter = yaml.safe_load(path.read_text(encoding="utf-8").split("---", 2)[1])
-        assert str(frontmatter["version"]) == "1.0.11", path
+        assert str(frontmatter["version"]) == "1.0.12", path
 
 
 def test_repository_contains_no_credentials_or_lab_identifiers():

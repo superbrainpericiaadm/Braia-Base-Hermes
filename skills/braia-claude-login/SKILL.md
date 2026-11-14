@@ -1,7 +1,7 @@
 ---
 name: braia-claude-login
 description: Conecta a assinatura Claude pela conversa com a Braia.
-version: 1.0.11
+version: 1.0.12
 platforms: [linux]
 metadata:
   hermes:

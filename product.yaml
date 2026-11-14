@@ -1,5 +1,5 @@
 id: braia-base
-version: 1.0.11
+version: 1.0.12
 status: release
 core_agents:
 - braia

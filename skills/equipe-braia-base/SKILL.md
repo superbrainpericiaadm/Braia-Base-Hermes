@@ -1,7 +1,7 @@
 ---
 name: equipe-braia-base
 description: Equipe, responsabilidades e módulos ativos da Braia Base.
-version: 1.0.11
+version: 1.0.12
 author: SuperBrain Inteligência Pericial e Contábil Ltda
 license: Proprietary
 metadata:

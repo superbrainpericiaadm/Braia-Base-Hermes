@@ -1,7 +1,7 @@
 ---
 name: criar-agente-hermes
 description: Formato e instalação de novos agentes e ferramentas.
-version: 1.0.11
+version: 1.0.12
 author: SuperBrain Inteligência Pericial e Contábil Ltda
 license: Proprietary
 metadata:

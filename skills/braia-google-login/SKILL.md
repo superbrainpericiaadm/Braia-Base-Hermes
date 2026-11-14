@@ -1,7 +1,7 @@
 ---
 name: braia-google-login
 description: "Conecta a conta Google do dono com o cliente OAuth da Braia."
-version: 1.0.11
+version: 1.0.12
 author: "SuperBrain Inteligência Pericial e Contábil Ltda"
 license: "Proprietary"
 metadata:
@@ -21,7 +21,7 @@ Esta skill tem precedência sobre o roteiro de primeira configuração da skill 
 
 ## O que já existe no perfil
 
-- `${HERMES_HOME}/google_client_secret.json`: cliente OAuth do app da Braia, do tipo aplicativo da Web, com retorno no portal da SuperBrain. É provisionado pelo instalador SuperBrain fora do Git; não acompanha a distribuição base. Nunca peça esse arquivo ao Chefe, nunca peça client ID ou chave, nunca mande criar projeto ou ativar APIs no Google Cloud.
+- `${HERMES_HOME}/google_client_secret.json`: cliente OAuth do app da Braia, do tipo aplicativo da Web, com retorno no portal da SuperBrain. Desde a v1.0.12 o cliente acompanha a distribuição em `${HERMES_HOME}/skills/braia-google-login/google_client_secret.json` (somente o JSON do cliente; nenhum token). Nunca peça esse arquivo ao Chefe, nunca peça client ID ou chave, nunca mande criar projeto ou ativar APIs no Google Cloud.
 - `${HERMES_HOME}/google_token.json`: nasce quando o Chefe autoriza. É o único arquivo gerado por instalação. Se existir e `--check` responder `AUTHENTICATED`, a conta já está conectada: não repita o login.
 - `${HERMES_HOME}/skills/braia-google-login/scripts/google_login.py`: gera a URL e conclui a conexão sozinho, em segundo plano, assim que o Chefe autoriza.
 - Os scripts bundled ficam em `${HERMES_HOME}/skills/productivity/google-workspace/scripts/`. Com o perfil ativo, `HERMES_HOME` é a raiz do perfil.
@@ -37,7 +37,7 @@ $GSETUP --check
 ```
 
 1. Se `--check` responder `AUTHENTICATED`, avise o Chefe que a conta já está conectada e pare.
-2. Confira que `${HERMES_HOME}/google_client_secret.json` existe. Se não existir, o provisionamento Google ainda não foi concluído: avise o Chefe e peça suporte à SuperBrain. Não tente criar o arquivo.
+2. Confira que `${HERMES_HOME}/google_client_secret.json` existe. Se não existir, copie o cliente que acompanha a distribuição: `install -m 600 ${HERMES_HOME}/skills/braia-google-login/google_client_secret.json ${HERMES_HOME}/google_client_secret.json`. Se nem esse existir, avise o Chefe e peça suporte à SuperBrain. Não tente criar o arquivo.
 3. Registre o cliente e gere a URL:
 
 ```bash

@@ -1,5 +1,5 @@
 name: braia-base
-version: 1.0.11
+version: 1.0.12
 description: 'Braia Base: equipe operacional modular da SuperBrain no Hermes.'
 hermes_requires: '>=0.21.0'
 author: SuperBrain Inteligência Pericial e Contábil Ltda

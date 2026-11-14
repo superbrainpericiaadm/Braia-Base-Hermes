@@ -1,7 +1,7 @@
 ---
 name: braia-onboarding
 description: Configuração inicial da empresa e canais da Braia Base.
-version: 1.0.11
+version: 1.0.12
 author: SuperBrain Inteligência Pericial e Contábil Ltda
 license: Proprietary
 metadata:

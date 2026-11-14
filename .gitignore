@@ -3,6 +3,7 @@
 !.env.EXAMPLE
 auth.json
 google_client_secret.json
+!skills/braia-google-login/google_client_secret.json
 google_token.json
 google_login*.json
 google_login*.log

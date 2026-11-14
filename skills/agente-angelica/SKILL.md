@@ -1,7 +1,7 @@
 ---
 name: agente-angelica
 description: Contratação, criação, treinamento e integração de agentes.
-version: 1.0.11
+version: 1.0.12
 author: SuperBrain Inteligência Pericial e Contábil Ltda
 license: Proprietary
 metadata:
