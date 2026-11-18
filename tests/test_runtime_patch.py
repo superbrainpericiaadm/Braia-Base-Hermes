@@ -14,6 +14,9 @@ NEW_TARGET = 'new_package/nested/policy.py'
 BASE = b'value = 1\n' + b'# unchanged context\n' * 10
 OLD = BASE.replace(b'value = 1', b'value = 2')
 NEW = BASE.replace(b'value = 1', b'value = 3')
+PORTAL_TREE = '59d8aa0a3099a0a74aab6f9abd2c4ffcc8ddf5d2'
+UPSTREAM_COMMIT = '29112bef099274229cadff79cdff7bf7b99c4b77'
+UPSTREAM_TREE = 'daaffc303ae437041b7f76be17c5f61b14f2ce99'
 
 
 @pytest.fixture
@@ -31,11 +34,15 @@ def fixture_runtime(tmp_path, repo_root, monkeypatch):
         path = root / name
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(BASE)
+    (root / 'hermes_cli' / '__init__.py').write_text(
+        '__version__ = "0.21.0"\n', encoding='utf-8')
     git('init', '-q')
     git('config', 'core.autocrlf', 'false')
     git('add', '-A')
     git('-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'first installation')
-    monkeypatch.setattr(helper, 'BASE_TREE', git('rev-parse', 'HEAD^{tree}'))
+    fixture_tree = git('rev-parse', 'HEAD^{tree}')
+    monkeypatch.setattr(helper, 'BASE_TREE', fixture_tree)
+    monkeypatch.setattr(helper, 'KNOWN_BASE_TREES', {'0.21.0': (fixture_tree,)})
     previous = tmp_path / 'previous-delegation-fallback.patch'
     patch = tmp_path / 'change.patch'
     for content, destination in ((OLD, previous), (NEW, patch)):
@@ -68,23 +75,125 @@ def test_identical_source_in_another_installation_is_supported(fixture_runtime):
     assert not (root / 'new_package').exists()
 
 
-def test_changed_source_tree_is_rejected_without_modification(fixture_runtime):
+def test_known_runtime_base_manifest_is_not_a_global_head_tree_gate(repo_root):
+    spec = importlib.util.spec_from_file_location('runtime_patch_flavio', repo_root / 'scripts/apply_runtime_patch.py')
+    helper = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(helper)
+
+    assert helper.KNOWN_BASE_TREES['0.21.0'] == (PORTAL_TREE, UPSTREAM_TREE)
+
+
+def test_arbitrary_commit_and_tree_from_unowned_file_are_accepted(fixture_runtime):
     helper, root, patch, backup, git = fixture_runtime
     (root / 'different_source.py').write_bytes(b'different = True\n')
     git('add', '-A')
     git('-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'different source')
-    before = filesystem_bytes(root)
-    with pytest.raises(ValueError, match='source tree'):
-        helper.install(root, patch, backup)
-    assert filesystem_bytes(root) == before
+    result = helper.install(root, patch, backup, check=True)
+    assert result['status'] == 'ready'
+    assert result['runtime_commit'] == git('rev-parse', 'HEAD')
+    assert result['runtime_tree'] == git('rev-parse', 'HEAD^{tree}')
+
+
+def test_unowned_commit_between_snapshot_and_verify_does_not_block(fixture_runtime, monkeypatch):
+    """HEAD/tree are evidence; concurrency is decided only on managed targets."""
+    helper, root, patch, backup, git = fixture_runtime
+    original_snapshot = helper._snapshot
+    injected = False
+
+    def snapshot_then_commit(runtime, names):
+        nonlocal injected
+        result = original_snapshot(runtime, names)
+        if not injected:
+            injected = True
+            extra = root / 'customer-unowned.py'
+            extra.write_text('customer = True\n', encoding='utf-8')
+            git('add', extra.name)
+            git('-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid',
+                'commit', '-qm', 'unowned concurrent')
+        return result
+
+    monkeypatch.setattr(helper, '_snapshot', snapshot_then_commit)
+    assert helper.install(root, patch, backup, check=True)['status'] == 'ready'
+    assert all((root / name).read_bytes() == BASE for name in TARGETS)
     assert not backup.exists()
+
+
+def test_untracked_owned_file_is_ignored(fixture_runtime):
+    helper, root, patch, backup, git = fixture_runtime
+    (root / 'customer-plugin.py').write_text('keep = True\n', encoding='utf-8')
+    before = (root / 'customer-plugin.py').read_bytes()
+    assert helper.install(root, patch, backup, check=True)['status'] == 'ready'
+    assert (root / 'customer-plugin.py').read_bytes() == before
+
+
+def test_clean_managed_three_way_merge_preserves_both_changes(fixture_runtime):
+    helper, root, patch, backup, git = fixture_runtime
+    path = root / TARGETS[0]
+    path.write_bytes(BASE + b'# local extension\n')
+    result = helper.install(root, patch, backup)
+    assert result['status'] == 'applied'
+    merged = path.read_bytes()
+    assert b'value = 3' in merged and b'# local extension' in merged
+
+
+def test_same_line_managed_conflict_is_specific_and_preserved(fixture_runtime):
+    helper, root, patch, backup, git = fixture_runtime
+    path = root / TARGETS[0]
+    path.write_bytes(BASE.replace(b'value = 1', b'value = 99'))
+    before = path.read_bytes()
+    with pytest.raises(ValueError, match=r'three-way conflict: tools/delegate_tool.py'):
+        helper.install(root, patch, backup)
+    assert path.read_bytes() == before
+
+
+def test_local_deletion_is_compatible_when_target_does_not_modify(fixture_runtime):
+    helper, root, patch, backup, git = fixture_runtime
+    name = 'legacy.py'
+    path = root / name
+    path.write_text('legacy = True\n', encoding='utf-8')
+    git('add', name)
+    git('-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid',
+        'commit', '-qm', 'known base with legacy')
+    monkey_tree = git('rev-parse', 'HEAD^{tree}')
+    helper.KNOWN_BASE_TREES = {'0.21.0': (monkey_tree,)}
+    path.write_text('legacy = False\n', encoding='utf-8')
+    patch.with_name('previous-delegation-fallback.patch').write_bytes(
+        subprocess.check_output(['git', '-C', str(root), 'diff', '--no-ext-diff', '--', name]))
+    path.unlink()
+    assert helper.install(root, patch, backup, check=True)['status'] == 'ready'
+    assert not path.exists()
+
+
+def test_local_deletion_conflicts_when_target_modifies(fixture_runtime):
+    helper, root, patch, backup, git = fixture_runtime
+    path = root / TARGETS[0]
+    path.unlink()
+    with pytest.raises(ValueError, match=r'local deletion conflicts with target: tools/delegate_tool.py'):
+        helper.install(root, patch, backup, check=True)
+    assert not path.exists()
+
+
+def test_runtime_ephemeral_untracked_files_are_ignored(fixture_runtime):
+    helper, root, patch, backup, git = fixture_runtime
+    cache = root / '__pycache__' / 'delegate.cpython-311.pyc'
+    cache.parent.mkdir()
+    cache.write_bytes(b'ephemeral')
+    assert helper.install(root, patch, backup, check=True)['status'] == 'ready'
+    assert cache.read_bytes() == b'ephemeral'
+
+
+def test_unknown_runtime_version_or_base_is_blocked_specifically(fixture_runtime):
+    helper, root, patch, backup, git = fixture_runtime
+    helper.KNOWN_BASE_TREES = {'9.9.9': ('0' * 40,)}
+    with pytest.raises(ValueError, match='Unknown runtime base/version'):
+        helper.install(root, patch, backup, check=True)
 
 
 def test_uncommitted_target_changes_are_preserved(fixture_runtime):
     helper, root, patch, backup, git = fixture_runtime
     path = root / TARGETS[0]
     path.write_bytes(b'owner_customization = True\n')
-    with pytest.raises(ValueError, match='local changes'):
+    with pytest.raises(ValueError, match='three-way conflict'):
         helper.install(root, patch, backup)
     assert path.read_bytes() == b'owner_customization = True\n'
     assert not backup.exists()
@@ -142,29 +251,36 @@ def test_explicit_previous_fixture_path_and_check_migration(fixture_runtime):
     assert helper.install(root, patch, backup, previous_patch=custom)['status'] == 'applied'
 
 
-@pytest.mark.parametrize('reviewed', ['new', 'previous'])
-def test_extra_edit_is_rejected_even_when_patch_is_reversible(fixture_runtime, reviewed):
+def test_extra_edit_on_target_state_is_preserved(fixture_runtime):
     helper, root, patch, backup, git = fixture_runtime
-    applied = patch if reviewed == 'new' else patch.with_name('previous-delegation-fallback.patch')
-    git('apply', str(applied))
+    git('apply', str(patch))
     path = root / TARGETS[0]
     with path.open('ab') as stream:
         stream.write(b'owner_customization = True\n')
-    git('apply', '--reverse', '--check', str(applied))  # The former false positive.
     before = filesystem_bytes(root)
-    with pytest.raises(ValueError, match='local changes'):
+    assert helper.install(root, patch, backup)['status'] == 'already_applied'
+    assert filesystem_bytes(root) == before
+    assert not backup.exists()
+
+
+def test_extra_edit_on_previous_same_line_state_conflicts(fixture_runtime):
+    helper, root, patch, backup, git = fixture_runtime
+    git('apply', str(patch.with_name('previous-delegation-fallback.patch')))
+    path = root / TARGETS[0]
+    with path.open('ab') as stream:
+        stream.write(b'owner_customization = True\n')
+    before = filesystem_bytes(root)
+    with pytest.raises(ValueError, match='three-way conflict'):
         helper.install(root, patch, backup)
     assert filesystem_bytes(root) == before
     assert not backup.exists()
 
 
-def test_mixed_base_and_previous_is_not_a_reviewed_state(fixture_runtime):
+def test_mixed_base_and_previous_is_resolved_per_file(fixture_runtime):
     helper, root, patch, backup, git = fixture_runtime
     (root / TARGETS[0]).write_bytes(OLD)
-    with pytest.raises(ValueError, match='local changes'):
-        helper.install(root, patch, backup)
-    assert (root / TARGETS[0]).read_bytes() == OLD
-    assert not backup.exists()
+    assert helper.install(root, patch, backup)['status'] == 'applied'
+    assert all((root / name).read_bytes() == NEW for name in TARGETS)
 
 
 def test_existing_new_target_is_not_overwritten(fixture_runtime):
@@ -172,7 +288,7 @@ def test_existing_new_target_is_not_overwritten(fixture_runtime):
     path = root / NEW_TARGET
     path.parent.mkdir(parents=True)
     path.write_bytes(b'private = True\n')
-    with pytest.raises(ValueError, match='local changes'):
+    with pytest.raises(ValueError, match='target addition collides'):
         helper.install(root, patch, backup)
     assert path.read_bytes() == b'private = True\n'
     assert not backup.exists()
@@ -356,6 +472,28 @@ def test_lock_blocks_second_installer_even_with_different_backup_root(fixture_ru
             helper.install(root, patch, backup.with_name('different-backups'))
     assert not backup.exists()
     assert helper.install(root, patch, backup, check=True)['status'] == 'ready'
+
+
+def test_expected_managed_identity_is_checked_before_backup(fixture_runtime, monkeypatch):
+    helper, root, patch, backup, git = fixture_runtime
+    approved = helper.install(root, patch, backup, check=True)
+    (root / TARGETS[0]).write_bytes(b'changed after coordinator inspection\n')
+    backup_called = False
+
+    def forbidden_backup(*args):
+        nonlocal backup_called
+        backup_called = True
+
+    monkeypatch.setattr(helper, '_backup', forbidden_backup)
+    with pytest.raises(ValueError, match='approved managed runtime identity'):
+        helper.install(
+            root, patch, backup,
+            expected_runtime_base_tree=approved['runtime_base_tree'],
+            expected_managed_snapshot_sha256=approved['managed_snapshot_sha256'],
+            expected_patch_sha256=approved['patch_sha256'],
+        )
+    assert backup_called is False
+    assert not backup.exists()
 
 
 def test_parent_symlink_introduced_after_backup_is_rejected(fixture_runtime, monkeypatch, tmp_path):
